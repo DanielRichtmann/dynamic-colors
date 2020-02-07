@@ -58,7 +58,7 @@ Add this line to your profile to always set the last color scheme.
 
 ### Key binding example for urxvt
 
-Save this to `~/.urxvt/rxt/dynamic-colors`:
+Save this to `~/.urxvt/ext/dynamic-colors`:
 
     sub cycle {
       my ($self) = @_;
