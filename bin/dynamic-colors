@@ -5,18 +5,12 @@ USAGE="Usage: dynamic-colors [help|cycle|init|list|switch <colorscheme>]"
 HELP="\
 dynamic-colors <command>
 
-Basic commands:
-  h,help                  print this help message
-  c,cycle                 cycle through color schemes
-  e,edit [<colorscheme>]  edit <colorscheme> when given or launch editor
-                          in colorschemes directory otherwise
-  i,init                  (re)load last color scheme
-  l,list                  list available colorschemes
-  s,switch <colorscheme>  change terminal colors to <colorscheme>
-
-Creating colorschemes:
-  a,audit <colorscheme>   check <colorscheme> for undefined colors
-  c,create <colorscheme>  create a new colorscheme from scratch
+Commands:
+  h, help                  print this help message
+  c, cycle                 cycle through color schemes
+  i, init                  (re)load last color scheme
+  l, list                  list available colorschemes
+  s, switch <colorscheme>  change terminal colors to <colorscheme>
 "
 
 die () {
@@ -69,7 +63,6 @@ DSC="${ESC}P"
 OSC="${ESC}]"
 
 colors=( background foreground cursorColor mouse_background mouse_foreground highlight border color0 color1 color2 color3 color4 color5 color6 color7 color8 color9 color10 color11 color12 color13 color14 color15 )
-color_names=( black red green yellow blue magenta cyan white brblack brred brgreen bryellow brblue brmagenta brcyan brwhite )
 
 if [ -z "${DYNAMIC_COLORS_ROOT}" ]; then
   DYNAMIC_COLORS_ROOT="${HOME}/.dynamic-colors"
@@ -93,12 +86,6 @@ init () {
   set_colors
 }
 
-unset_colors () {
-  for color in ${colors[@]}; do
-    unset ${!color}
-  done
-}
-
 set_colors () {
   for color in ${colors[@]}; do
     [[ ${!color} ]] && change_color "$color" "${!color}"
@@ -118,46 +105,27 @@ switch () {
   set_colors
 }
 
-audit () {
-  unset_colors
-  load_colorscheme "$1"
-  declare -a problems
-  for color in ${colors[@]}; do
-    if [ ! ${!color} ]; then
-      problems=( "${problems[@]}" "\033[4m$color\033[0m is not defined" )
-    fi
-  done
-  if [ ${#problems[@]} -ne 0 ]; then
-    echo >&2 "$1:"
-    for p in "${problems[@]}"
-    do
-      echo >&2 " * $p"
-    done
-    exit 1
-  fi
-}
-
 cycle() {
-    if [ -f "${DYNAMIC_COLORS_ROOT}/colorscheme" ]; then
-        current=`head -1 "${DYNAMIC_COLORS_ROOT}/colorscheme"`
-        found=false
-        cd "$COLORSCHEMES"
-        for file in *; do
-            if [ $found = true ]; then
-                switch "${file}"
-                return
-            fi
-            if [ $file = "${current}" ]; then
-                found=true
-            fi
-        done
-    fi
-
+  if [ -f "${DYNAMIC_COLORS_ROOT}/colorscheme" ]; then
+    current=$(head -1 "${DYNAMIC_COLORS_ROOT}/colorscheme")
+    found=false
     cd "$COLORSCHEMES"
     for file in *; do
+      if [ $found = true ]; then
         switch "${file}"
-        break
+        return
+      fi
+      if [ $file = "${current}" ]; then
+        found=true
+      fi
     done
+  fi
+
+  cd "$COLORSCHEMES"
+  for file in *; do
+    switch "${file}"
+    break
+  done
 }
 
 list () {
@@ -166,27 +134,6 @@ list () {
   for file in *; do
     echo "${file}"
   done
-}
-
-edit () {
-  cd "$COLORSCHEMES"
-  if [ ${#@} -eq 0 ]; then
-    ${EDITOR:-/usr/bin/vim} .
-  else
-    ${EDITOR:-/usr/bin/vim} "${@}"
-  fi
-}
-
-create () {
-  [ -f "$COLORSCHEMES/$1" ] && die "error: colorscheme '$1' already exists"
-  output="# $1\n"
-  for color in ${colors[@]}; do
-    output+="\n$color=\"\""
-    [[ $color == color* ]] && output+=" # ${color_names[${color#color}]}"
-  done
-  cd "$COLORSCHEMES"
-  echo -e "$output" >> "$1"
-  edit "$1"
 }
 
 usage () {
@@ -206,17 +153,10 @@ case "$#" in
   case "$cmd" in
   h|help)
     help ;;
-  a|audit)
-    audit "$1" ;;
-  c|create)
-    [ $# -ne 1 ] && usage
-    create "$1" ;;
-  e|edit)
-    edit "$@" ;;
-  i|init)
-    init ;;
   l|list)
     list ;;
+  i|init)
+    init ;;
   s|switch)
     [ $# -ne 1 ] && usage
     switch "$1" ;;
