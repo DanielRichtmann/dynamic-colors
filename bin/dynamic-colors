@@ -96,7 +96,7 @@ load_colorscheme () {
   [ ! -f "$COLORSCHEMES/$1" ] && die "error: unknown colorscheme '$1'"
   while IFS=: read -r prop value; do
           [[ -n "$value" ]] && printf -v "$prop" "%s" "$value"
-  done < <(tr -d '[:blank:]' < "$COLORSCHEMES/$1" | sed -n 's/^\*\.*//p')
+  done < <(cpp "$COLORSCHEMES/$1" | tr -d '[:blank:]' | sed -n 's/^\*\.*//p')
 }
 
 switch () {
@@ -148,6 +148,7 @@ case "$#" in
 0)
   usage ;;
 *)
+  command -v cpp >/dev/null 2>&1 || die "error: cpp preprocessor is required for parsing Xresource files."
   cmd="$1"
   shift
   case "$cmd" in
