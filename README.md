@@ -60,22 +60,17 @@ Add this line to your profile to always set the last color scheme.
 
 Save this to `~/.urxvt/rxt/dynamic-colors`:
 
-    sub cycle {
-      my ($self) = @_;
-      my $output = `dynamic-colors cycle`;
-      $self->cmd_parse($output);
-    }
-
-    sub on_user_command {
+    sub on_action {
       my ($self, $cmd) = @_;
-      if ($cmd eq "dynamic-colors:cycle") {
-        $self->cycle;
+      if ($cmd eq "cycle") {
+        my $output = `dynamic-colors cycle`;
+        $self->cmd_parse($output);
       }
     }
 
-And bind keys in `~/.Xdefaults` / `~/.Xresources`:
+And bind the key in your `~/.Xresources`:
 
     urxvt*perl-ext-common: dynamic-colors
-    urxvt*keysym.F12: perl:dynamic-colors:cycle
+    urxvt*keysym.F12: dynamic-colors:cycle
 
 Now you can cycle through all color schemes using `F12` without closing running console applications.
